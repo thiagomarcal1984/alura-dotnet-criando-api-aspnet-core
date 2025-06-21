@@ -144,3 +144,65 @@ Serviço gRPC do ASP.NET Core                            grpc                   
 
 PS D:\alura\dotnet-criando-api-aspnet-core> 
 ```
+## Criação do projeto Shared.Modelos
+Vamos criar um projeto de Biblioteca de Classes (nome de template `classlib`) para concentrar a comunicação com o banco de dados.
+
+1) Criação do diretório do projeto:
+```
+PS D:\alura\dotnet-criando-api-aspnet-core> mkdir ScreenSound.Shared.Modelos
+
+
+    Diretório: D:\alura\dotnet-criando-api-aspnet-core
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        17/06/2025     21:00                ScreenSound.Shared.Modelos
+```
+
+2) Criação do projeto do tipo `classlib` (Biblioteca de Classes):
+```
+PS D:\alura\dotnet-criando-api-aspnet-core> cd .\ScreenSound.Shared.Modelos\
+PS D:\alura\dotnet-criando-api-aspnet-core\ScreenSound.Shared.Modelos> dotnet new classlib
+O modelo "Biblioteca de Classes" foi criado com êxito.
+
+Processando ações pós-criação...
+Restaurando D:\alura\dotnet-criando-api-aspnet-core\ScreenSound.Shared.Modelos\ScreenSound.Shared.Modelos.csproj:
+A restauração foi bem-sucedida.
+
+```
+
+3) Acrescentando o projeto à solução:
+```
+PS D:\alura\dotnet-criando-api-aspnet-core\ScreenSound.Shared.Modelos> cd ..
+PS D:\alura\dotnet-criando-api-aspnet-core> dotnet solution add .\ScreenSound.Shared.Modelos\
+O projeto ‘ScreenSound.Shared.Modelos\ScreenSound.Shared.Modelos.csproj’ foi adicionado à solução.
+PS D:\alura\dotnet-criando-api-aspnet-core> 
+```
+
+A ideia agora é mover o diretório `Modelos` do projeto `ScreenSound` para `ScreenSound.Shared.Modelos`. Naturalmente o código vai quebrar porque será necessário atualizar as dependências entre os dois projetos. Para isso, clique com o botão direito no nó `Dependências` no projeto `ScreeSound.csproj` e escolha a opção `Adicionar Referência de Projeto...`.
+
+Note que, ao usar esse comando, o arquivo `ScreendSound.csproj` passará a conter as seguintes linhas:
+```XML
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Resto do código -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\ScreenSound.Shared.Modelos\ScreenSound.Shared.Modelos.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+Após confirmar as alterações, você pode fazer o build (ou executar o projeto):
+```
+PS D:\alura\dotnet-criando-api-aspnet-core> dotnet build --no-incremental
+Restauração concluída (1,0s)
+  ScreenSound.Shared.Modelos êxito (0,4s) → ScreenSound.Shared.Modelos\bin\Debug\net9.0\ScreenSound.Shared.Modelos.dll
+  ScreenSound.API êxito (0,7s) → ScreenSound.API\bin\Debug\net9.0\ScreenSound.API.dll
+  ScreenSound êxito (3,2s) → ScreenSound\bin\Debug\net9.0\ScreenSound.dll
+
+Construir êxito em 10,4s
+PS D:\alura\dotnet-criando-api-aspnet-core>
+```
