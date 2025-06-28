@@ -495,3 +495,22 @@ app.MapPost("/Artistas/", ([FromServices] DAL<Artista> dal, [FromBody]Artista ar
 
 app.Run();
 ```
+## Removendo Artistas
+```CSharp
+// ScreendSound.API\Program.cs
+
+// Resto do código
+app.MapDelete("/Artistas/{id}", ([FromServices] DAL<Artista> dal, int id) =>
+{
+    var artista = dal.RecuperarPor(a => a.Id == id);
+    if (artista is null)
+    {
+        return Results.NotFound();
+    }
+    dal.Deletar(artista);
+
+    return Results.NoContent();
+});
+// Resto do código
+```
+> A novidade é o tipo de retorno quando a exclusão da entidade é efetivada: é o `Results.NoContent` (código HTTP 204). Fora isso, nada novo: injeção da dependência do DAL e o uso dos seus métodos para interagir com o banco de dados.
