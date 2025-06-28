@@ -514,3 +514,36 @@ app.MapDelete("/Artistas/{id}", ([FromServices] DAL<Artista> dal, int id) =>
 // Resto do código
 ```
 > A novidade é o tipo de retorno quando a exclusão da entidade é efetivada: é o `Results.NoContent` (código HTTP 204). Fora isso, nada novo: injeção da dependência do DAL e o uso dos seus métodos para interagir com o banco de dados.
+
+## Atualizando o Artista
+Atualizar uma entidade é mais complexo porque a rota exige o payload (atributo `[FromBody] Entidade entidade`) e o identificador da entidade que será modificada.
+
+> Veja que é necessário mapear cada propriedade da entidade com o payload. Flask é MUITO melhor pra trabalhar com a atualização de entidades...
+
+```CSharp
+// ScreendSound.API\Program.cs
+
+// Resto do código
+app.MapPut(
+    "/Artistas/{id}", 
+    (
+        [FromServices] DAL<Artista> dal,
+        [FromBody] Artista artista,
+        int id
+    ) => {
+        var artistaAAatualizar = dal.RecuperarPor(a => a.Id == id);
+        if (artistaAAatualizar is null)
+        {
+            return Results.NotFound();
+        }
+
+        artistaAAatualizar.Nome = artista.Nome;
+        artistaAAatualizar.Bio = artista.Bio;
+        artistaAAatualizar.FotoPerfil = artista.FotoPerfil;
+
+        dal.Atualizar(artistaAAatualizar);
+        return Results.Ok();
+    }
+);
+// Resto do código
+```
