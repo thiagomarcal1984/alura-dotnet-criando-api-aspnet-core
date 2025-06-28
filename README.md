@@ -313,3 +313,63 @@ Finalmente, o arquivo `ScreendSound.csproj` precisa acrescentar a dependência d
 
 </Project>
 ```
+## Retornando artistas pela API
+Vamos fazer a API se comunicar com o banco. Para isso, primeiramente vamos incluir no projeto `ScreenSound.API` as dependências dos projetos `ScreenSound.Shared.Modelos` e `ScreenSound.Shared.Dados`:
+```XML
+<!-- Arquivo ScreenSound.Api.csproj -->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Resto do código -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\ScreenSound.Shared.Modelos\ScreenSound.Shared.Modelos.csproj" />
+    <ProjectReference Include="..\ScreenSound.Shared.Dados\ScreenSound.Shared.Dados.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+Vamos mudar o arquivo `Program.cs` do projeto `ScreendSound.API` para exibir a lista de artistas no caminho raiz:
+```CSharp
+// ScreendSound.API\Program.cs
+using ScreenSound.Banco;
+using ScreenSound.Modelos;
+
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/", () =>
+{
+    var dal = new DAL<Artista>(new ScreenSoundContext());
+    return dal.Listar();
+});
+
+app.Run();
+```
+Mas se compilarmos o projeto da API (`dotnet run --project .\ScreenSound.API\`) e acessarmos a aplicação no localhost, vai aparecer um erro de recursividade (Artista referencia Música, que referencia Artista e assim sucessivamente).
+
+Para corrigir isso, vamos acrescentar um serviço para evitar essas buscas cíclicas. Eis o código de `Program.cs`:
+```CSharp
+// ScreendSound.API\Program.cs
+using ScreenSound.Banco;
+using ScreenSound.Modelos;
+using System.Text.Json.Serialization; // Novo código
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Início do novo código
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(
+    options => options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles
+);
+// Fim do novo código
+
+var app = builder.Build();
+
+app.MapGet("/", () =>
+{
+    var dal = new DAL<Artista>(new ScreenSoundContext());
+    return dal.Listar();
+});
+
+app.Run();
+```
+Agora a compilação funciona sem problemas.
