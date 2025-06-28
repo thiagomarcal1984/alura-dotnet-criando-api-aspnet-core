@@ -206,3 +206,110 @@ Restauração concluída (1,0s)
 Construir êxito em 10,4s
 PS D:\alura\dotnet-criando-api-aspnet-core>
 ```
+## Criação do projeto Shared.Data
+Vamos mover os diretórios `Banco` e `Migrations` que estão no projeto `ScreenSound` para um novo projeto de Biblioteca de Classes que se chamará `ScreenSound.Shared.Dados`. Para isso, vamos repetir os passos da linha de comando:
+
+1. Criar o diretório `ScreenSound.Shared.Dados`;
+```
+PS D:\alura\dotnet-criando-api-aspnet-core> mkdir ScreenSound.Shared.Dados
+
+
+    Diretório: D:\alura\dotnet-criando-api-aspnet-core
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        21/06/2025     11:02                ScreenSound.Shared.Dados
+
+```
+
+2. Criar um projeto de Biblioteca de Classes (`classlib`) nesse diretório;
+```
+PS D:\alura\dotnet-criando-api-aspnet-core> cd .\ScreenSound.Shared.Dados\   
+PS D:\alura\dotnet-criando-api-aspnet-core\ScreenSound.Shared.Dados> dotnet new classlib
+O modelo "Biblioteca de Classes" foi criado com êxito.
+
+Processando ações pós-criação...
+Restaurando D:\alura\dotnet-criando-api-aspnet-core\ScreenSound.Shared.Dados\ScreenSound.Shared.Dados.csproj:
+A restauração foi bem-sucedida.
+```
+3. Adicionar esse projeto à solução (`ScreenSound.sln`);
+```
+PS D:\alura\dotnet-criando-api-aspnet-core\ScreenSound.Shared.Dados> cd ..
+PS D:\alura\dotnet-criando-api-aspnet-core> dotnet solution add .\ScreenSound.Shared.Dados\   
+O projeto ‘ScreenSound.Shared.Dados\ScreenSound.Shared.Dados.csproj’ foi adicionado à solução.
+PS D:\alura\dotnet-criando-api-aspnet-core> 
+```
+
+4. Moveremos o conteúdo dos diretórios `Banco` e `Migrations` para `ScreenSound.Shared.Dados`;
+```
+PS D:\alura\dotnet-criando-api-aspnet-core> move .\ScreenSound\Banco\ .\ScreenSound.Shared.Dados\   
+PS D:\alura\dotnet-criando-api-aspnet-core> move .\ScreenSound\Migrations\ .\ScreenSound.Shared.Dados\
+```
+
+5. Incluiremos no novo projeto `ScreenSound.Shared.Dados` a dependência para o projeto `ScreenSound.Shared.Modelos.csproj`. Além da dependência de projeto, será necessário também referenciar as dependências do NuGet neste arquivo, movendo-os do `ScreenSound.proj` para `ScreenSound.Shared.Dados.csproj`.
+```XML
+<!-- Arquivo ScreenSound.Shared.Dados.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Resto do código -->
+
+  <!-- Este ItemGroup foi movido do projeto ScreenSound.csproj -->
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.11.4" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="7.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.14">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.1" />
+    <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ScreenSound.Shared.Modelos\ScreenSound.Shared.Modelos.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+As classes `DAL` e `ScreenSoundContext` do projeto `ScreendSound.Shared.Dados` estão anotadas como `internal`. Para que elas possam ser usadas pelos outros projetos, precisamos declará-las como públicas:
+```Csharp
+// ScreendSound.Shared.Dados/Banco/DAL.cs
+// Resto do código
+namespace ScreenSound.Banco;
+// Antes era: internal class DAL<T> where T : class
+public class DAL<T> where T : class
+{
+  // Resto do código
+}
+```
+
+```Csharp
+// ScreendSound.Shared.Dados/Banco/ScreendSoundContext.cs
+// Resto do código
+namespace ScreenSound.Banco;
+// Antes era: internal class ScreenSoundContext: DbContext
+public class ScreenSoundContext: DbContext
+{
+  // Resto do código
+}
+```
+
+Finalmente, o arquivo `ScreendSound.csproj` precisa acrescentar a dependência do novo projeto `ScreenSound.Shared.Dados`:
+```XML
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Resto do código -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\ScreenSound.Shared.Modelos\ScreenSound.Shared.Modelos.csproj" />
+    <ProjectReference Include="..\ScreenSound.Shared.Dados\ScreenSound.Shared.Dados.csproj" />
+  </ItemGroup>
+
+</Project>
+```
