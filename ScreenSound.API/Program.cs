@@ -9,17 +9,20 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(
     options => options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles
 );
 
+builder.Services.AddDbContext<ScreenSoundContext>();
+builder.Services.AddTransient<DAL<Artista>>();
+
 var app = builder.Build();
 
-app.MapGet("/Artistas", () =>
+app.MapGet("/Artistas", ([FromServices] DAL<Artista> dal) =>
 {
-    var dal = new DAL<Artista>(new ScreenSoundContext());
+    // var dal = new DAL<Artista>(new ScreenSoundContext());
     return Results.Ok(dal.Listar());
 });
 
-app.MapGet("/Artistas/{nome}", (string nome) =>
+app.MapGet("/Artistas/{nome}", ([FromServices] DAL<Artista> dal, string nome) =>
 {
-    var dal = new DAL<Artista>(new ScreenSoundContext());
+    // var dal = new DAL<Artista>(new ScreenSoundContext());
     var artista = dal.RecuperarPor(a => a.Nome.ToUpper().Equals(nome.ToUpper()));
     if (artista is null)
     {
@@ -28,9 +31,9 @@ app.MapGet("/Artistas/{nome}", (string nome) =>
     return Results.Ok(artista);
 });
 
-app.MapPost("/Artistas/", ([FromBody]Artista artista) =>
+app.MapPost("/Artistas/", ([FromServices] DAL<Artista> dal, [FromBody]Artista artista) =>
 {
-    var dal = new DAL<Artista>(new ScreenSoundContext());
+    // var dal = new DAL<Artista>(new ScreenSoundContext());
     dal.Adicionar(artista);
     return Results.Ok();
 });

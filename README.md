@@ -456,3 +456,42 @@ Payload em formato JSON:
 1. A classe `FromBody` vem da biblioteca `Microsoft.AspNetCore.Mvc` e serve para inferir um objeto de modelo a partir da requisição POST!
 2. O retorno desta rota estará vazio mesmo.
 3. Você pode testar esta rota da API com o ThunderClient do Visual Studio (ou Postman, ou cUrl, a ferramenta que você quiser).
+
+## Injeção de dependência
+O Asp.Net permite injeção de dependência no builder da aplicação web. Vamos usar os métodos `AddDbContext` e `AddTransient` do objeto `builder.Services` para definir o que será injetado. Depois, injetamos as dependências em cada rota com o atributo `[FromServices]` da biblioteca `Microsoft.AspNetCore.Mvc`.
+
+Veja o código a seguir:
+```Csharp
+// ScreendSound.API\Program.cs
+// Resto do código
+builder.Services.AddDbContext<ScreenSoundContext>();
+builder.Services.AddTransient<DAL<Artista>>();
+
+var app = builder.Build();
+
+app.MapGet("/Artistas", ([FromServices] DAL<Artista> dal) =>
+{
+    // Código excluído: var dal = new DAL<Artista>(new ScreenSoundContext());
+    return Results.Ok(dal.Listar());
+});
+
+app.MapGet("/Artistas/{nome}", ([FromServices] DAL<Artista> dal, string nome) =>
+{
+    // Código excluído: var dal = new DAL<Artista>(new ScreenSoundContext());
+    var artista = dal.RecuperarPor(a => a.Nome.ToUpper().Equals(nome.ToUpper()));
+    if (artista is null)
+    {
+        return Results.NotFound();
+    }
+    return Results.Ok(artista);
+});
+
+app.MapPost("/Artistas/", ([FromServices] DAL<Artista> dal, [FromBody]Artista artista) =>
+{
+    // Código excluído: var dal = new DAL<Artista>(new ScreenSoundContext());
+    dal.Adicionar(artista);
+    return Results.Ok();
+});
+
+app.Run();
+```
