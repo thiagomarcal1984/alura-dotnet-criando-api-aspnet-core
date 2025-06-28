@@ -373,3 +373,43 @@ app.MapGet("/", () =>
 app.Run();
 ```
 Agora a compilação funciona sem problemas.
+
+# Montando uma API mínima
+## Entendendo rotas e códigos de resposta
+O arquivo `Program.cs` do projeto `ScreendSound.API` vai ser modificado: vamos criar duas rotas para retorno dos artistas:
+1. A primeira (que era a rota raiz) passará a ser `/Artistas` e exibirá todos os artistas; e
+2. A segunda será `/Artistas/{nome do artista}` e exibirá algum artista específico.
+
+
+Vamos ao código de definição das rotas:
+```Csharp
+// ScreendSound.API\Program.cs
+
+// Resto do código
+app.MapGet("/Artistas", () =>
+{
+    var dal = new DAL<Artista>(new ScreenSoundContext());
+    return Results.Ok(dal.Listar());
+});
+
+app.MapGet("/Artistas/{nome}", (string nome) =>
+{
+    var dal = new DAL<Artista>(new ScreenSoundContext());
+    var artista = dal.RecuperarPor(a => a.Nome.ToUpper().Equals(nome.ToUpper()));
+    if (artista is null)
+    {
+        return Results.NotFound();
+    }
+    return Results.Ok(artista);
+});
+
+app.Run();
+```
+
+> Observações:
+> 1. Uniformize os tipos de retorno em uma rota (`app.MapGet("{rota}")`). Por exemplo: se eu usar um condicional que retorna string em um ramo e retorna um objeto de modelo em outro, ocorre erro de compilação;
+> 2. Um meio de fazer essa uniformização é sempre usar os métodos da classe `Results` para qualquer retorno da API (`Results.NotFound()`, `Results.Ok(objetoDeModelo)`, etc.).
+
+A segunda rota criada pode dar erro se não houver um construtor sem parâmetros na classe Artista. O erro exibido é este:
+> NotSupportedException: The deserialization constructor for type 'Castle.Proxies.ArtistaProxy' contains parameters with null names. This might happen because the parameter names have been trimmed by ILLink. Consider using the source generated serializer instead.
+Acrescente o construtor `public Artista(){}` na classe `ScreenSound.Modelos.Artista` para não mostrar esse erro.
