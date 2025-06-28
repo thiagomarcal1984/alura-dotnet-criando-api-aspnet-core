@@ -413,3 +413,46 @@ app.Run();
 A segunda rota criada pode dar erro se não houver um construtor sem parâmetros na classe Artista. O erro exibido é este:
 > NotSupportedException: The deserialization constructor for type 'Castle.Proxies.ArtistaProxy' contains parameters with null names. This might happen because the parameter names have been trimmed by ILLink. Consider using the source generated serializer instead.
 Acrescente o construtor `public Artista(){}` na classe `ScreenSound.Modelos.Artista` para não mostrar esse erro.
+
+## Adicionando o Artista
+Nova rota para acréscimo de artista:
+```Csharp
+// ScreendSound.API\Program.cs
+using Microsoft.AspNetCore.Mvc;
+
+// Resto do código
+app.MapPost("/Artistas/", ([FromBody]Artista artista) =>
+{
+    var dal = new DAL<Artista>(new ScreenSoundContext());
+    dal.Adicionar(artista);
+    return Results.Ok();
+});
+
+// Resto do código
+```
+
+Vamos mudar o construtor vazio de `Artista` para gerar a foto de perfil e assim não tornar esse campo obrigatório para preenchimento:
+```Csharp
+// ScreenSound.Shared.Modelos\Artista.cs
+// Resto do código
+public class Artista {
+  // Resto do código
+      public Artista()
+      {
+          FotoPerfil = "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png";
+      }
+  // Resto do código
+}
+```
+
+Payload em formato JSON:
+```JSON
+{
+  "Nome" : "White Stripes",
+  "Bio" : "Bio dos White Stripes"
+}
+```
+
+1. A classe `FromBody` vem da biblioteca `Microsoft.AspNetCore.Mvc` e serve para inferir um objeto de modelo a partir da requisição POST!
+2. O retorno desta rota estará vazio mesmo.
+3. Você pode testar esta rota da API com o ThunderClient do Visual Studio (ou Postman, ou cUrl, a ferramenta que você quiser).
