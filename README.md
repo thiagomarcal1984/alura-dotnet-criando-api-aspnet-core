@@ -547,3 +547,70 @@ app.MapPut(
 );
 // Resto do código
 ```
+
+## Mão na massa: criando os endpoints de música
+```Csharp
+// ScreendSound.API\Program.cs
+
+// Resto do código
+builder.Services.AddTransient<DAL<Musica>>(); 
+// Foi necessário acrescentar outro DAL para música.
+
+// Resto do código
+app.MapGet("/Musicas", ([FromServices] DAL<Musica> dal) =>
+{
+    return Results.Ok(dal.Listar());
+});
+
+app.MapGet("/Musicas/{nome}", ([FromServices] DAL<Musica> dal, string nome) =>
+{
+    var musica = dal.RecuperarPor(a => a.Nome.ToUpper().Equals(nome.ToUpper()));
+    if (musica is null)
+    {
+        return Results.NotFound();
+    }
+    return Results.Ok(musica);
+});
+
+app.MapPost("/Musicas/", ([FromServices] DAL<Musica> dal, [FromBody]Musica musica) =>
+{
+    dal.Adicionar(musica);
+    return Results.Ok();
+});
+
+app.MapDelete("/Musicas/{id}", ([FromServices] DAL<Musica> dal, int id) =>
+{
+    var musica = dal.RecuperarPor(a => a.Id == id);
+    if (musica is null)
+    {
+        return Results.NotFound();
+    }
+    dal.Deletar(musica);
+
+    return Results.NoContent();
+});
+
+app.MapPut(
+    "/Musicas/{id}", 
+    (
+        [FromServices] DAL<Musica> dal,
+        [FromBody] Musica musica,
+        int id
+    ) => {
+        var musicaAAatualizar = dal.RecuperarPor(a => a.Id == id);
+        if (musicaAAatualizar is null)
+        {
+            return Results.NotFound();
+        }
+
+        musicaAAatualizar.Nome = musica.Nome;
+        musicaAAatualizar.AnoLancamento = musica.AnoLancamento;
+        musicaAAatualizar.Artista = musica.Artista;
+
+        dal.Atualizar(musicaAAatualizar);
+        return Results.Ok();
+    }
+);
+// Resto do código
+```
+> Problema: de alguma maneira, o artista não é associado à música quando ela é inserida no banco de dados.
