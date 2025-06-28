@@ -614,3 +614,76 @@ app.MapPut(
 // Resto do código
 ```
 > Problema: de alguma maneira, o artista não é associado à música quando ela é inserida no banco de dados.
+
+# Boas práticas na construção de uma API
+## Separando as responsabilidades
+Vamos criar um diretório chamado `Endpoints` dentro `ScreenSound.API` que armazenará as chamadas __classes de extensão__  da aplicação web principal.
+
+O código de `Program.cs` ficará assim:
+
+```CSharp
+// ScreendSound.API\Program.cs
+
+using ScreenSound.API.Endpoints;
+using ScreenSound.Banco;
+using ScreenSound.Modelos;
+using System.Text.Json.Serialization;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(
+    options => options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles
+);
+
+builder.Services.AddDbContext<ScreenSoundContext>();
+builder.Services.AddTransient<DAL<Artista>>();
+builder.Services.AddTransient<DAL<Musica>>();
+
+var app = builder.Build();
+
+app.AddEndpointsArtistas(); // Método declarado em Endpoints\ArtistasExtensions.
+app.AddEndpointsMusicas(); // Método declarado em Endpoints\MusicasExtensions.
+
+app.Run();
+```
+
+As classes de extensão precisam ser __estáticas__, e os métodos que serão reutilizados pelo objeto da aplicação precisam ser estáticos também.
+
+Vamos às classes de extensão:
+
+```CSharp
+// ScreenSound.API\Endpoints\ArtistasExtensions
+using Microsoft.AspNetCore.Mvc;
+using ScreenSound.Modelos;
+using ScreenSound.Banco;
+
+namespace ScreenSound.API.Endpoints;
+
+public static class ArtistasExtensions
+{
+    public static void AddEndpointsArtistas(this WebApplication app)
+    {
+        app.MapGet("/Artistas", ([FromServices] DAL<Artista> dal) =>
+        {
+            return Results.Ok(dal.Listar());
+        });
+
+        // Resto do código com os demais mapeamentos.
+    }
+}
+```
+> Repetindo: a classe deve ser estática, e seus métodos também. Além disso, note que o método estático usa a declaração `this WebApplication`: é isso que vai acrescentar funcionalidade ao objeto `app` do programa principal.
+
+```CSharp
+// ScreenSound.API\Endpoints\MusicasExtensions
+// Imports
+namespace ScreenSound.API.Endpoints;
+
+public static class MusicasExtensions
+{
+    public static void AddEndpointsMusicas(this WebApplication app)
+    {
+        // Resto do código com os mapeamentos.
+    }
+}
+```
