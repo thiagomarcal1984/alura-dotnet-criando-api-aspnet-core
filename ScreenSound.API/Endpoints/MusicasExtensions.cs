@@ -52,7 +52,8 @@ public static class MusicasExtensions
             "/Musicas/{id}", 
             (
                 [FromServices] DAL<Musica> dal,
-                [FromBody] Musica musica,
+                [FromServices] DAL<Artista> dalArtista,
+                [FromBody] MusicaRequestEdit musicaRequestEdit,
                 int id
             ) => {
                 var musicaAAatualizar = dal.RecuperarPor(a => a.Id == id);
@@ -61,9 +62,10 @@ public static class MusicasExtensions
                     return Results.NotFound();
                 }
 
-                musicaAAatualizar.Nome = musica.Nome;
-                musicaAAatualizar.AnoLancamento = musica.AnoLancamento;
-                musicaAAatualizar.Artista = musica.Artista;
+                var artista = dalArtista.RecuperarPor(a => a.Id == musicaRequestEdit.ArtistaId);
+                musicaAAatualizar.Nome = musicaRequestEdit.nome;
+                musicaAAatualizar.AnoLancamento = musicaRequestEdit.anoLancamento;
+                musicaAAatualizar.Artista = artista;
 
                 dal.Atualizar(musicaAAatualizar);
                 return Results.Ok();

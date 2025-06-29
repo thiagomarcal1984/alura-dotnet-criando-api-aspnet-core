@@ -824,3 +824,82 @@ app.MapPost("/Musicas/", (
 });
 // Resto do código
 ```
+## Mão na massa: implementando a atualização de artistas e músicas
+DTOs:
+```CSharp
+// ScreenSound.API\Requests\ArtistaRequestEdit.cs
+namespace ScreenSound.API.Requests;
+
+public record ArtistaRequestEdit(
+    int id,
+    string nome, 
+    string bio
+): ArtistaRequest(nome, bio);
+```
+
+```CSharp
+// ScreenSound.API\Requests\MusicaRequestEdit.cs
+namespace ScreenSound.API.Requests;
+
+public record MusicaRequestEdit(
+    int id,
+    string nome, 
+    int ArtistaId, 
+    int anoLancamento
+): MusicaRequest(nome, ArtistaId, anoLancamento);
+```
+
+Endpoints:
+```CSharp
+// ScreenSound.Api\Endpoints\ArtistasExtensions.cs
+// Resto do código
+app.MapPut(
+    "/Artistas/{id}",
+    (
+        [FromServices] DAL<Artista> dal,
+        [FromBody] ArtistaRequestEdit artstaRequestEdit,
+        int id
+    ) =>
+    {
+        var artistaAAatualizar = dal.RecuperarPor(a => a.Id == id);
+        if (artistaAAatualizar is null)
+        {
+            return Results.NotFound();
+        }
+
+        artistaAAatualizar.Nome = artstaRequestEdit.nome;
+        artistaAAatualizar.Bio = artstaRequestEdit.bio;
+
+        dal.Atualizar(artistaAAatualizar);
+        return Results.Ok();
+    }
+);
+// Resto do código
+```
+
+```CSharp
+// ScreenSound.API\Endpoints\MusicasExtensions.cs
+app.MapPut(
+    "/Musicas/{id}", 
+    (
+        [FromServices] DAL<Musica> dal,
+        [FromServices] DAL<Artista> dalArtista,
+        [FromBody] MusicaRequestEdit musicaRequestEdit,
+        int id
+    ) => {
+        var musicaAAatualizar = dal.RecuperarPor(a => a.Id == id);
+        if (musicaAAatualizar is null)
+        {
+            return Results.NotFound();
+        }
+
+        var artista = dalArtista.RecuperarPor(a => a.Id == musicaRequestEdit.ArtistaId);
+        musicaAAatualizar.Nome = musicaRequestEdit.nome;
+        musicaAAatualizar.AnoLancamento = musicaRequestEdit.anoLancamento;
+        musicaAAatualizar.Artista = artista;
+
+        dal.Atualizar(musicaAAatualizar);
+        return Results.Ok();
+    }
+);
+```

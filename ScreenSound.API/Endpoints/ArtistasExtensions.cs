@@ -49,7 +49,7 @@ public static class ArtistasExtensions
             "/Artistas/{id}",
             (
                 [FromServices] DAL<Artista> dal,
-                [FromBody] Artista artista,
+                [FromBody] ArtistaRequestEdit artstaRequestEdit,
                 int id
             ) =>
             {
@@ -59,9 +59,8 @@ public static class ArtistasExtensions
                     return Results.NotFound();
                 }
 
-                artistaAAatualizar.Nome = artista.Nome;
-                artistaAAatualizar.Bio = artista.Bio;
-                artistaAAatualizar.FotoPerfil = artista.FotoPerfil;
+                artistaAAatualizar.Nome = artstaRequestEdit.nome;
+                artistaAAatualizar.Bio = artstaRequestEdit.bio;
 
                 dal.Atualizar(artistaAAatualizar);
                 return Results.Ok();
