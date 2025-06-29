@@ -2,16 +2,29 @@ using Microsoft.AspNetCore.Mvc;
 using ScreenSound.Modelos;
 using ScreenSound.Banco;
 using ScreenSound.API.Requests;
+using ScreenSound.API.Response;
 
 namespace ScreenSound.API.Endpoints;
 
 public static class ArtistasExtensions
 {
+    private static ICollection<ArtistaResponse> EntityListToResponseList(IEnumerable<Artista> listaDeArtistas)
+    {
+        return listaDeArtistas.Select(a => EntityToResponse(a)).ToList();
+    }
+
+    private static ArtistaResponse EntityToResponse(Artista artista)
+    {
+        return new ArtistaResponse(artista.Id, artista.Nome, artista.Bio, artista.FotoPerfil);
+    }
+
     public static void AddEndpointsArtistas(this WebApplication app)
     {
         app.MapGet("/Artistas", ([FromServices] DAL<Artista> dal) =>
         {
-            return Results.Ok(dal.Listar());
+            return Results.Ok(
+                EntityListToResponseList(dal.Listar())
+            );
         });
 
         app.MapGet("/Artistas/{nome}", ([FromServices] DAL<Artista> dal, string nome) =>
@@ -21,7 +34,7 @@ public static class ArtistasExtensions
             {
                 return Results.NotFound();
             }
-            return Results.Ok(artista);
+            return Results.Ok(EntityToResponse(artista));
         });
 
         app.MapPost("/Artistas/", (

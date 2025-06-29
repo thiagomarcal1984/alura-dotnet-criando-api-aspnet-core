@@ -903,3 +903,120 @@ app.MapPut(
     }
 );
 ```
+## Mão na massa: response
+Da mesma forma que podemos formatar as entradas com os DTOs de Request, podemos formatar as saídas também, usando DTOs de Response.
+
+Então, vamos criar um diretório `Response` no projeto `ScreenSound.API` e inserir os seguintes DTOs de Response:
+```CSharp
+// ScreenSound.API\Response\ArtistaResponse.cs
+namespace ScreenSound.API.Response;
+
+public record ArtistaResponse(
+    int Id, 
+    string Nome, 
+    string Bio, 
+    string? FotoPerfil
+);
+```
+```CSharp
+// ScreenSound.API\Response\MusicaResponse.cs
+namespace ScreenSound.API.Response;
+
+public record MusicaResponse(
+    int Id, 
+    string Nome, 
+    int ArtistaId, 
+    string NomeArtista
+);
+```
+
+Definido os DTOs de Response (formatos de saída), vamos colocá-los nos métodos HTTP GET respectivos de cada endpoint:
+```CSharp
+// ScreenSound.Api\Endpoints\ArtistasExtensions.cs
+// Resto do código
+using ScreenSound.API.Response;
+
+namespace ScreenSound.API.Endpoints;
+
+public static class ArtistasExtensions
+{
+    // Método pra conversão de coleção de entidades para coleção de DTOs.
+    private static ICollection<ArtistaResponse> EntityListToResponseList(IEnumerable<Artista> listaDeArtistas)
+    {
+        return listaDeArtistas.Select(a => EntityToResponse(a)).ToList();
+    }
+
+    // Método pra conversão de entidade para um DTO.
+    private static ArtistaResponse EntityToResponse(Artista artista)
+    {
+        return new ArtistaResponse(artista.Id, artista.Nome, artista.Bio, artista.FotoPerfil);
+    }
+
+    public static void AddEndpointsArtistas(this WebApplication app)
+    {
+        app.MapGet("/Artistas", ([FromServices] DAL<Artista> dal) =>
+        {
+            return Results.Ok(
+                // Aqui retornam-se DTOs, não entidades.
+                EntityListToResponseList(dal.Listar()) 
+            );
+        });
+
+        app.MapGet("/Artistas/{nome}", ([FromServices] DAL<Artista> dal, string nome) =>
+        {
+            var artista = dal.RecuperarPor(a => a.Nome.ToUpper().Equals(nome.ToUpper()));
+            if (artista is null)
+            {
+                return Results.NotFound();
+            }
+            // Aqui retorna-se um DTO, não uma entidade.
+            return Results.Ok(EntityToResponse(artista)); 
+        });
+
+        // Resto do código
+    }
+}
+```
+
+```CSharp
+// ScreenSound.API\Endpoints\MusicasExtensions.cs
+// Resto do código
+using ScreenSound.API.Response;
+
+namespace ScreenSound.API.Endpoints;
+
+public static class MusicasExtensions
+{
+    private static ICollection<MusicaResponse> EntityListToResponseList(IEnumerable<Musica> musicaList)
+    {
+        return musicaList.Select(a => EntityToResponse(a)).ToList();
+    }
+
+    private static MusicaResponse EntityToResponse(Musica musica)
+    {
+        return new MusicaResponse(musica.Id, musica.Nome!, musica.Artista!.Id, musica.Artista.Nome);
+    }
+    
+    public static void AddEndpointsMusicas(this WebApplication app)
+    {
+        app.MapGet("/Musicas", ([FromServices] DAL<Musica> dal) =>
+        {
+            // Aqui retornam-se DTOs, não entidades.
+            return Results.Ok(EntityListToResponseList(dal.Listar()));
+        });
+
+        app.MapGet("/Musicas/{nome}", ([FromServices] DAL<Musica> dal, string nome) =>
+        {
+            var musica = dal.RecuperarPor(a => a.Nome.ToUpper().Equals(nome.ToUpper()));
+            if (musica is null)
+            {
+                return Results.NotFound();
+            }
+            // Aqui retorna-se um DTO, não uma entidade.
+            return Results.Ok(EntityToResponse(musica));
+        });
+
+        // Resto do código
+    }
+}
+```
