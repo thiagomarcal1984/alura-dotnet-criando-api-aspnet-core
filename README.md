@@ -744,3 +744,54 @@ Finalmente, vamos acrescentar uma configuração no arquivo `launchSettings.json
   }
 }
 ```
+
+## Request
+No Swagger, a descrição das variáveis necessárias para usar os endpoints é muito extenso. Veja o exemplo do Post de um Artista:
+```JSON
+{
+  "musicas": [
+    {
+      "nome": "string",
+      "id": 0,
+      "anoLancamento": 0,
+      "artista": "string"
+    }
+  ],
+  "nome": "string",
+  "fotoPerfil": "string",
+  "bio": "string",
+  "id": 0
+}
+```
+> Este exemplo é obtido ao clicarmos no botão "Try it out" do endpoint para inserir um Artista (via Post).
+
+Podemos simplificar essa descrição de variáveis usando um DTO (Data Transfer Object). Neste exemplo, usaremos um objeto do tipo `record`, que armazenaremos no namespace `Requests` do projeto `ScreendSound.API`:
+```CSharp
+// ScreenSound.API\Requests\ArtistaRequest.cs;
+namespace ScreenSound.API.Requests;
+
+public record ArtistaRequest(string nome, string bio);
+```
+
+Vamos mudar a definição do endpoint de artistas (`ArtistasExtensions.cs`)
+```CSharp
+// ScreenSound.API\Endpoints\ArtistasExtensions.cs
+// Resto do código
+app.MapPost("/Artistas/", (
+    [FromServices] DAL<Artista> dal,
+    [FromBody] ArtistaRequest artistaRequest) => // Aqui não é mais uma entidade Artista
+{
+    // Usaremos o DTO ArtistaRequest para preencher a nova entidade:
+    var artista = new Artista(artistaRequest.nome, artistaRequest.bio);
+    dal.Adicionar(artista);
+    return Results.Ok();
+});
+// Resto do código
+```
+Note que, ao acessar o endpoint para inserir um artista, o número de parâmetros necessários ficou reduzido:
+```JSON
+{
+  "nome": "string",
+  "bio": "string"
+}
+```
