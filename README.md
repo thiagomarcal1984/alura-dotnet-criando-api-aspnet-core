@@ -795,3 +795,32 @@ Note que, ao acessar o endpoint para inserir um artista, o número de parâmetro
   "bio": "string"
 }
 ```
+## Mão na massa: request de música
+Criação do DTO `MusicaRequest`:
+
+```CSharp
+// ScreenSound.API\Requests\MusicaRequest.cs;
+using System.ComponentModel.DataAnnotations;
+
+namespace ScreenSound.API.Requests;
+
+public record MusicaRequest([Required]string nome, [Required] int ArtistaId, int anoLancamento);
+```
+
+Mudança no endpoint pra postar música (`MusicassExtensions.cs`)
+```CSharp
+// ScreenSound.API\Endpoints\MusicasExtensions.cs
+// Resto do código
+app.MapPost("/Musicas/", (
+    [FromServices] DAL<Musica> dal,
+    [FromServices] DAL<Artista> dalArtistas,
+    [FromBody]MusicaRequest musicaRequest) =>
+{
+    var musica = new Musica(musicaRequest.nome);
+    musica.AnoLancamento = musicaRequest.anoLancamento;
+    musica.Artista = dalArtistas.RecuperarPor(a => a.Id.Equals(musicaRequest.ArtistaId));
+    dal.Adicionar(musica);
+    return Results.Ok();
+});
+// Resto do código
+```
