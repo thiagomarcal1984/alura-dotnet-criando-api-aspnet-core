@@ -687,3 +687,60 @@ public static class MusicasExtensions
     }
 }
 ```
+
+## Adicionando o Swagger
+Primeiro, vamos acrescentar no arquivo `ScreendSound.API.csproj` as dependências para fazer o Swagger funcionar:
+```XML
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Resto do código -->
+  <!-- Imports para o Swagger -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
+  </ItemGroup>
+</Project>
+```
+
+Agora vamos usar os endpoints do Swagger em `Program.cs`:
+```CSharp
+// ScreendSound.API\Program.cs
+// Resto do código
+
+var builder = WebApplication.CreateBuilder(args);
+// Resto do código
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Resto do código
+
+var app = builder.Build();
+// Resto do código
+app.UseSwagger();
+app.UseSwaggerUI();
+// Resto do código
+```
+Somente isso já é suficiente para criar os endpoints do Swagger, que ficam acessíveis a partir de http://localhost/Swagger .
+
+Finalmente, vamos acrescentar uma configuração no arquivo `launchSettings.json`, para que a página do Swagger seja a primeira a ser exibida ao rodarmos a aplicação a partir do Visual Studio:
+
+```JSON
+// ScreenSound.API\Properties\launchSettings.json
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      // Resto do código
+      "launchUrl": "Swagger/index.html",
+      // Resto do código
+    },
+    "https": {
+      // Resto do código
+      "launchUrl": "Swagger/index.html",
+      // Resto do código
+    }
+  }
+}
+```
