@@ -2136,3 +2136,77 @@ Verifique se o banco de dados está com a nova tabela criada.
 >     }
 >}
 > ```
+
+## Relacionando gênero com música
+Vamos modificar as entidades `Musica` e `Genero`, de forma que elas tenham um relacionamento de muitos para muitos:
+
+```CSharp
+// ScreenSound.Shared.Modelos\Modelos\Musica.cs
+namespace ScreenSound.Modelos;
+
+public class Musica
+{
+    // Resto do código
+    public virtual ICollection<Genero> Generos{ get; set; }
+    // Resto do código
+}
+```
+```CSharp
+// ScreenSound.Shared.Modelos\Modelos\Genero.cs
+namespace ScreenSound.Modelos;
+
+public class Genero
+{
+    // Resto do código
+    public virtual ICollection<Musica> Musicas { get; set; }
+    // Resto do código
+}
+```
+
+> Lembre-se: se houver relacionamentos entre diferentes entidades, as propriedades que indicam esses relacionamentos precisam usar a palavra reservada `virtual`.
+
+Agora, para aplicar de fato a relação muitos para muitos, precisamos modifcar o contexto do banco de dados sobrescrevendo o método `OnModelCreating`:
+```CSharp
+// ScreenSound.Shared.Dados\Banco\ScreenSoundContext.cs
+// Resto do código
+public class ScreenSoundContext: DbContext
+{
+    // Resto do código
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Musica>()
+            .HasMany(c => c.Generos)
+            .WithMany(c => c.Musicas);
+    }
+}
+```
+
+Vamos criar a migração `RelacionandoMusicaGenero` no Console do Gerenciador de Pacotes:
+```
+PM> Add-Migration RelacionandoMusicaGenero
+Build started...
+Build succeeded.
+To undo this action, use Remove-Migration.
+PM> 
+```
+> A criação dessa migração vai ter um código para uma nova tabela chamada `GeneroMusica`. A classe dessa tabela não existirá: ela estará presente apenas no banco de dados.
+
+Aplicando a migration no banco de dados:
+```
+PM> Update-Database
+Build started...
+Build succeeded.
+Applying migration '20250629204943_RelacionandoMusicaGenero'.
+Done.
+PM> 
+```
+> Para fazer um downgrade do banco de dados, execute o comando `Update-Database -Migration {Nome da Migration}` no Console do Gerenciador de pacotes:
+> ```
+> PM> Update-Database -Migration AdicaoDaTabelaGenero
+> Build started...
+> Build succeeded.
+> Reverting migration '20250629210322_RelacionandoMusicaGenero'.
+> Done.
+> PM> 
+> ```
